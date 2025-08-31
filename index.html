@@ -59,6 +59,7 @@
 <body>
   <h2>MRAID Test Harness</h2>
 
+  <!-- 👇 Paste ADM / HTML creative here -->
   <textarea id="creativeHtml" placeholder="Paste your ADM / HTML creative here"></textarea><br>
   <button onclick="loadCreative()">Render Creative</button>
 
@@ -78,7 +79,7 @@
       logBox.scrollTop = logBox.scrollHeight;
     }
 
-    // Fallback stub if no SDK provides mraid.js
+    // Stub MRAID if SDK not present
     if (typeof window.mraid === "undefined") {
       window.mraid = {
         getState: () => "default",
@@ -94,7 +95,7 @@
       log("⚠️ Injected stub mraid.js (since no SDK provided one)");
     }
 
-    // Inject debug hooks
+    // Hook into MRAID calls
     (function attachMraidDebugger() {
       const methods = ["open","close","expand","resize","playVideo","storePicture"];
       methods.forEach(fn => {
