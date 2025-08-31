@@ -25,6 +25,7 @@
       width: 100%;
       height: 100%;
       border: none;
+      background: white;
     }
     #log {
       width: 90%;
@@ -35,23 +36,49 @@
       padding: 8px;
       font-family: monospace;
     }
+    textarea {
+      width: 90%;
+      height: 200px;
+      margin: 10px 0;
+      font-family: monospace;
+    }
+    button {
+      padding: 8px 16px;
+      margin: 8px;
+      border: none;
+      background: #333;
+      color: white;
+      cursor: pointer;
+      border-radius: 6px;
+    }
+    button:hover {
+      background: #555;
+    }
   </style>
 </head>
 <body>
   <h2>MRAID Test Harness</h2>
 
+  <textarea id="creativeHtml" placeholder="Paste your ADM / HTML creative here"></textarea><br>
+  <button onclick="loadCreative()">Render Creative</button>
+
   <div id="ad-container">
     <iframe id="creativeFrame"></iframe>
   </div>
 
-  <button onclick="loadCreative()">Load Creative</button>
-  <input id="creativeUrl" type="text" size="60" placeholder="Paste creative URL here">
-  
   <h3>Debug Log</h3>
   <div id="log"></div>
 
   <script>
-    // Fallback stub if no real SDK injects mraid.js
+    // Logger helper
+    function log(msg) {
+      console.log(msg);
+      const logBox = document.getElementById("log");
+      logBox.innerHTML += msg + "<br>";
+      logBox.scrollTop = logBox.scrollHeight;
+    }
+
+    // Fallback stub if no SDK provides mraid.js
     if (typeof window.mraid === "undefined") {
       window.mraid = {
         getState: () => "default",
@@ -65,14 +92,6 @@
         addEventListener: (ev, fn) => log("Listener added: " + ev),
       };
       log("⚠️ Injected stub mraid.js (since no SDK provided one)");
-    }
-
-    // Logger helper
-    function log(msg) {
-      console.log(msg);
-      const logBox = document.getElementById("log");
-      logBox.innerHTML += msg + "<br>";
-      logBox.scrollTop = logBox.scrollHeight;
     }
 
     // Inject debug hooks
@@ -100,12 +119,16 @@
       log("✅ MRAID Debugger attached");
     })();
 
-    // Load creative into iframe
+    // Load creative from textarea into iframe
     function loadCreative() {
-      const url = document.getElementById("creativeUrl").value;
-      if (!url) return alert("Enter a creative URL first.");
-      document.getElementById("creativeFrame").src = url;
-      log("🔗 Loading creative: " + url);
+      const creativeHtml = document.getElementById("creativeHtml").value;
+      if (!creativeHtml) return alert("Paste creative HTML first.");
+      const iframe = document.getElementById("creativeFrame");
+      const doc = iframe.contentDocument || iframe.contentWindow.document;
+      doc.open();
+      doc.write(creativeHtml);
+      doc.close();
+      log("🖼️ Creative rendered into iframe");
     }
   </script>
 </body>
