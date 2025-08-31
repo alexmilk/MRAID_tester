@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MRAID Test Harness</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f8f8f8;
+      margin: 0; padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    #ad-container {
+      width: 320px; 
+      height: 480px; 
+      border: 2px solid #333;
+      margin: 20px;
+      background: white;
+      position: relative;
+      overflow: hidden;
+    }
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    #log {
+      width: 90%;
+      height: 200px;
+      overflow-y: auto;
+      background: black;
+      color: lime;
+      padding: 8px;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <h2>MRAID Test Harness</h2>
+
+  <div id="ad-container">
+    <iframe id="creativeFrame"></iframe>
+  </div>
+
+  <button onclick="loadCreative()">Load Creative</button>
+  <input id="creativeUrl" type="text" size="60" placeholder="Paste creative URL here">
+  
+  <h3>Debug Log</h3>
+  <div id="log"></div>
+
+  <script>
+    // Fallback stub if no real SDK injects mraid.js
+    if (typeof window.mraid === "undefined") {
+      window.mraid = {
+        getState: () => "default",
+        isViewable: () => true,
+        getPlacementType: () => "inline",
+        open: (url) => log("MRAID.open called with: " + url),
+        close: () => log("MRAID.close called"),
+        expand: () => log("MRAID.expand called"),
+        resize: () => log("MRAID.resize called"),
+        playVideo: (url) => log("MRAID.playVideo called with: " + url),
+        addEventListener: (ev, fn) => log("Listener added: " + ev),
+      };
+      log("⚠️ Injected stub mraid.js (since no SDK provided one)");
+    }
+
+    // Logger helper
+    function log(msg) {
+      console.log(msg);
+      const logBox = document.getElementById("log");
+      logBox.innerHTML += msg + "<br>";
+      logBox.scrollTop = logBox.scrollHeight;
+    }
+
+    // Inject debug hooks
+    (function attachMraidDebugger() {
+      const methods = ["open","close","expand","resize","playVideo","storePicture"];
+      methods.forEach(fn => {
+        if (typeof mraid[fn] === "function") {
+          const orig = mraid[fn];
+          mraid[fn] = function() {
+            log(`📢 MRAID.${fn} called with args: ${JSON.stringify([...arguments])}`);
+            return orig.apply(this, arguments);
+          }
+        }
+      });
+      const events = ["ready","error","stateChange","viewableChange","sizeChange"];
+      events.forEach(ev => {
+        try {
+          mraid.addEventListener(ev, function() {
+            log(`📢 MRAID event fired: ${ev} ${JSON.stringify([...arguments])}`);
+          });
+        } catch(e) {
+          log("Error attaching event: " + ev);
+        }
+      });
+      log("✅ MRAID Debugger attached");
+    })();
+
+    // Load creative into iframe
+    function loadCreative() {
+      const url = document.getElementById("creativeUrl").value;
+      if (!url) return alert("Enter a creative URL first.");
+      document.getElementById("creativeFrame").src = url;
+      log("🔗 Loading creative: " + url);
+    }
+  </script>
+</body>
+</html>
